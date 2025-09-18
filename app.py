@@ -240,3 +240,19 @@ def teapot():
     <p>Я чайник и не могу заваривать кофе.</p>
 </body>
 </html>''', 418
+
+@app.route('/cause_500')
+def cause_500():
+    raise RuntimeError("Ошибка для проверки 500")
+
+@app.errorhandler(500)
+def handle_500(err):
+    return '''<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Ошибка 500</title></head>
+<body>
+  <h1>Внутренняя ошибка сервера (500)</h1>
+  <p>Произошла ошибка. Попробуйте позже.</p>
+  <a href="/">На главную</a>
+</body>
+</html>''', 500
