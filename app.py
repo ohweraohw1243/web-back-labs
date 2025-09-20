@@ -307,3 +307,11 @@ def handle_500(err):
   <a href="/">На главную</a>
 </body>
 </html>''', 500
+
+@app.route('/lab2/a')
+def a1():
+    return 'без слэша'
+
+@app.route('/lab2/a/')
+def a2():
+    return 'со слэшем'
