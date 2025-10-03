@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>Волков Даниил. {% block lab%}{%endblock %} </title>
+    <title>Волков Даниил. {% block lab%}{%endblock %} </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
 </head>
 <body>
     <header>
         WEB-программирование, часть 2. {{ self.lab() }}
+        <nav>
+            <a href="{{ url_for('index') }}">Главное меню</a>
+        </nav>
     </header>
     <main>
         {% block main %} {% endblock %}
