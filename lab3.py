@@ -33,8 +33,45 @@ def form1():
     age = request.args.get('age')
     sex = request.args.get('sex')
     errors = {}
-    if not user:
-        errors['user'] = 'Введите имя'
-    if not age:
-        errors['age'] = 'Заполните поле!'    
+
+    if request.args:
+        if not user:
+            errors['user'] = 'Введите имя'
+        if not age:
+            errors['age'] = 'Заполните возраст'
+
+        if not errors:
+            return render_template('lab3/form1.html', user=user, age=age, sex=sex, errors={})
+
     return render_template('lab3/form1.html', user=user, age=age, sex=sex, errors=errors)
+
+@lab3.route('/lab3/order')
+def order():
+    return render_template('lab3/order.html')
+
+
+@lab3.route('/lab3/pay')
+def pay():
+    drink = request.args.get('drink')
+    milk = request.args.get('milk')
+    sugar = request.args.get('sugar')
+
+    prices = {
+        'coffee': 120,
+        'black-tea': 80,
+        'green-tea': 70
+    }
+
+    price = prices.get(drink, 0)
+    if milk == 'on':
+        price += 30
+    if sugar == 'on':
+        price += 10
+
+    return render_template('lab3/pay.html', drink=drink, milk=milk, sugar=sugar, price=price)
+
+
+@lab3.route('/lab3/success')
+def success():
+    price = request.args.get('price')
+    return render_template('lab3/success.html', price=price)
