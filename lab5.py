@@ -47,12 +47,12 @@ def register():
     
     conn, cur = db_connect()
     
-    cur.execute(f"SELECT login FROM users WHERE login='{login}';")
+    cur.execute("SELECT login FROM users WHERE login=%s;", (login, ))
     if cur.fetchone():
         db_close(conn, cur)
         return render_template('lab5/register.html', error="Такой пользователь уже существует")
     password_hash = generate_password_hash(password)
-    cur.execute(f"INSERT INTO users (login,password) VALUES ('{login}', '{password_hash}');")
+    cur.execute("INSERT INTO users (login,password) VALUES (%s, %s);", (login, password))
     db_close(conn, cur)
     return render_template('lab5/success.html', login=login)    
 
