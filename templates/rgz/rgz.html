@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block lab %}РГЗ. Камера хранения{% endblock %}
+
+{% block script %}
+<script>
+    function jsonRpc(method, params) {
+        const url = '/rgz/json-rpc-api';
+        const json = {
+            'jsonrpc': '2.0',
+            'method': method,
+            'params': params,
+            'id': Math.round(Math.random() * 100000)
+        };
+        return fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)
+        }).then(r => r.json());
+    }
+
+    function loadState() {
+        jsonRpc('info', null).then(data => {
+            if (data.error) {
+                alert("Ошибка: " + data.error.message);
+                return;
+            }
+
+            const st = data.result;
+            const lockers = st.lockers;
+            const user = st.user;
+
+            document.getElementById('total').innerText = st.total;
+            document.getElementById('occupied').innerText = st.occupied;
+            document.getElementById('free').innerText = st.free;
+            document.getElementById('mycount').innerText = st.my_count;
+
+            if (user) {
+                document.getElementById("guest-panel").style.display = "none";
+                document.getElementById("user-panel").style.display = "block";
+                document.getElementById('user-info').innerText = "Вы вошли как: " + user.login;
+            } else {
+                document.getElementById("guest-panel").style.display = "block";
+                document.getElementById("user-panel").style.display = "none";
+                document.getElementById('user-info').innerText = "Вы не авторизованы.";
+            }
+
+            const grid = document.getElementById('locker-grid');
+            grid.innerHTML = '';
+
+            lockers.forEach(l => {
+                const div = document.createElement('div');
+                div.className = 'cell';
+
+                if (!l.free) {
+                    if (l.mine) div.classList.add('mine');
+                    else div.classList.add('occupied');
+                }
+
+                if (l.free) div.title = "Свободно";
+                else if (l.mine) div.title = "Занято вами";
+                else div.title = "Занято пользователем " + l.owner;
+
+                div.onclick = function () {
+                    if (!user) {
+                        if (l.free) {
+                            alert("Ячейка свободна, для бронирования войдите в аккаунт");
+                        } else {
+                            alert("Эта ячейка занята пользователем: " + l.owner);
+                        }
+                        return;
+                    }
+                    if (l.free) {
+                        booking(l.id);
+                    } else if (l.mine) {
+                        cancellation(l.id);
+                    } else {
+                        alert("Эта ячейка занята пользователем: " + l.owner);
+                    }
+                };
+
+                grid.appendChild(div);
+            });
+        });
+    }
+
+    function booking(id) {
+        jsonRpc('booking', id).then(data => {
+            if (data.error) alert(data.error.message);
+            loadState();
+        });
+    }
+
+    function cancellation(id) {
+        jsonRpc('cancellation', id).then(data => {
+            if (data.error) alert(data.error.message);
+            loadState();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadState);
+</script>
+
+<style>
+    #locker-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 28px);
+        grid-auto-rows: 28px;
+        gap: 3px;
+        margin-top: 10px;
+    }
+
+    .cell {
+        width: 28px;
+        height: 28px;
+        border: 1px solid black;
+        background: white;
+        cursor: pointer;
+    }
+
+    .cell.occupied {
+        background: black;
+    }
+
+    .cell.mine {
+        background: lightgreen;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<h1>Камера хранения</h1>
+
+<p id="user-info"></p>
+
+<div id="guest-panel">
+    <a href="/rgz/login">Вход</a> |
+    <a href="/rgz/register">Регистрация</a>
+</div>
+
+<div id="user-panel" style="display:none;">
+    <form action="/rgz/logout" method="get" style="display:inline;">
+        <button>Выйти</button>
+    </form>
+
+    <form action="/rgz/delete-account" method="post" style="display:inline;">
+        <button onclick="return confirm('Удалить аккаунт и все брони?')">
+            Удалить аккаунт
+        </button>
+    </form>
+</div>
+
+<hr>
+
+<p>Всего ячеек: <span id="total"></span></p>
+<p>Занято: <span id="occupied"></span></p>
+<p>Свободно: <span id="free"></span></p>
+<p>Ваши брони: <span id="mycount"></span> / 5</p>
+
+
+<div id="locker-grid"></div>
+
+{% endblock %}
