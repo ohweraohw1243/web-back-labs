@@ -54,7 +54,6 @@ def init_db():
         for i in range(1, 101):
             cur.execute("INSERT INTO rgz_lockers(id, owner_id) VALUES (?, NULL);", (i,))
 
-    # создаём администратора
     cur.execute("SELECT id FROM rgz_users WHERE login = 'admin';")
     if not cur.fetchone():
         cur.execute(
@@ -262,10 +261,14 @@ def rgz_api():
         cur.execute("SELECT COUNT(*) AS c FROM rgz_lockers WHERE owner_id=?;", (user['id'],))
         cnt = cur.fetchone()['c']
 
-        if cnt >= 5 and not user['is_admin']:
+        if user['is_admin']:
+            db_close(conn, cur)
+            return jsonrpc_error(7, "Администратору запрещено бронировать ячейки", _id)
+
+        if cnt >= 5:
             db_close(conn, cur)
             return jsonrpc_error(6, "Нельзя бронировать более пяти ячеек", _id)
-
+        
         cur.execute("UPDATE rgz_lockers SET owner_id=? WHERE id=?;", (user['id'], locker_id))
         db_close(conn, cur)
 

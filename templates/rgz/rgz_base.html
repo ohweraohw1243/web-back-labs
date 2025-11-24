@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Камера хранения{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='rgz/rgz.css') }}">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+<header class="rgz-top">
+    <div class="rgz-title-main">Расчетно-графическое задание</div>
+    <div class="rgz-student">Волков Даниил, ФБИ-34, 3 курс</div>
+</header>
+
+<main class="rgz-container">
+    {% block main %}{% endblock %}
+</main>
+
+<footer class="rgz-footer">
+   &copy; Волков Даниил, ФБИ-34, 3 курс, 2025
+</footer>
+
+{% block script %}{% endblock %}
+</body>
+</html>

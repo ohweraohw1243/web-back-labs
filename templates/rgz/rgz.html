@@ -1,6 +1,10 @@
-{% extends "base.html" %}
+{% extends "rgz/rgz_base.html" %}
 
 {% block lab %}РГЗ. Камера хранения{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='rgz/rgz.css') }}">
+{% endblock %}
 
 {% block script %}
 <script>
@@ -38,11 +42,20 @@
             if (user) {
                 document.getElementById("guest-panel").style.display = "none";
                 document.getElementById("user-panel").style.display = "block";
-                document.getElementById('user-info').innerText = "Вы вошли как: " + user.login;
+                document.getElementById('user-info').innerText =
+                    "Вы вошли как: " + user.login + (user.is_admin ? " (администратор)" : "");
+
+                if (user.is_admin) {
+                    document.getElementById("user-limit-info").style.display = "none";
+                } else {
+                    document.getElementById("user-limit-info").style.display = "block";
+                }
+
             } else {
                 document.getElementById("guest-panel").style.display = "block";
                 document.getElementById("user-panel").style.display = "none";
                 document.getElementById('user-info').innerText = "Вы не авторизованы.";
+                document.getElementById("user-limit-info").style.display = "none";
             }
 
             const grid = document.getElementById('locker-grid');
@@ -59,9 +72,10 @@
 
                 if (l.free) div.title = "Свободно";
                 else if (l.mine) div.title = "Занято вами";
-                else div.title = "Занято пользователем " + l.owner;
+                else div.title = "Занято пользователем: " + l.owner;
 
                 div.onclick = function () {
+
                     if (!user) {
                         if (l.free) {
                             alert("Ячейка свободна, для бронирования войдите в аккаунт");
@@ -70,14 +84,22 @@
                         }
                         return;
                     }
+
                     if (l.free) {
+                        if (user.is_admin) {
+                            alert("Администратор не может бронировать ячейки");
+                            return;
+                        }
                         booking(l.id);
-                    } else if (l.mine) {
-                        cancellation(l.id);
-                    } else {
-                        alert("Эта ячейка занята пользователем: " + l.owner);
+                        return;
                     }
-                         if (user.is_admin) {
+
+                    if (l.mine) {
+                        cancellation(l.id);
+                        return;
+                    }
+
+                    if (user.is_admin) {
                         if (confirm("Освободить ячейку, занятую пользователем: " + l.owner + "?")) {
                             cancellation(l.id);
                         }
@@ -107,41 +129,16 @@
 
     document.addEventListener('DOMContentLoaded', loadState);
 </script>
-
-<style>
-    #locker-grid {
-        display: grid;
-        grid-template-columns: repeat(10, 28px);
-        grid-auto-rows: 28px;
-        gap: 3px;
-        margin-top: 10px;
-    }
-
-    .cell {
-        width: 28px;
-        height: 28px;
-        border: 1px solid black;
-        background: white;
-        cursor: pointer;
-    }
-
-    .cell.occupied {
-        background: black;
-    }
-
-    .cell.mine {
-        background: lightgreen;
-    }
-</style>
 {% endblock %}
 
 {% block main %}
+
 <h1>Камера хранения</h1>
 
 <p id="user-info"></p>
 
 <div id="guest-panel">
-    <a href="/rgz/login">Вход</a> |
+    <a href="/rgz/login">Вход</a>
     <a href="/rgz/register">Регистрация</a>
 </div>
 
@@ -151,9 +148,7 @@
     </form>
 
     <form action="/rgz/delete-account" method="post" style="display:inline;">
-        <button onclick="return confirm('Удалить аккаунт и все брони?')">
-            Удалить аккаунт
-        </button>
+        <button onclick="return confirm('Удалить аккаунт и все брони?')">Удалить аккаунт</button>
     </form>
 </div>
 
@@ -162,8 +157,9 @@
 <p>Всего ячеек: <span id="total"></span></p>
 <p>Занято: <span id="occupied"></span></p>
 <p>Свободно: <span id="free"></span></p>
-<p>Ваши брони: <span id="mycount"></span> / 5</p>
-
+<div id="user-limit-info">
+    <p>Ваши брони: <span id="mycount"></span> / 5</p>
+</div>
 
 <div id="locker-grid"></div>
 
