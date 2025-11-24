@@ -41,12 +41,10 @@ def api():
 
     if data['method'] == 'info':
         conn, cur = db_connect()
-        if current_app.config['DB_TYPE'] == 'postgres':
-            cur.execute("SELECT * FROM offices ORDER BY number")
-        else:
-            cur.execute("SELECT * FROM offices ORDER BY number")
+        current_app.config['DB_TYPE'] == 'postgres'
 
-        offices = cur.fetchall()
+        cur.execute("SELECT * FROM offices ORDER BY number")
+        offices = [dict(row) for row in cur.fetchall()]
 
         login = session.get('login')
         total = 0
