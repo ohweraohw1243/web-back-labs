@@ -34,7 +34,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS rgz_users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             login TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            is_admin INTEGER DEFAULT 0
         );
     """)
 
@@ -48,25 +49,43 @@ def init_db():
 
     cur.execute("SELECT COUNT(*) AS c FROM rgz_lockers;")
     count = cur.fetchone()['c']
-
     if count < 100:
         cur.execute("DELETE FROM rgz_lockers;")
         for i in range(1, 101):
             cur.execute("INSERT INTO rgz_lockers(id, owner_id) VALUES (?, NULL);", (i,))
+
+    # создаём администратора
+    cur.execute("SELECT id FROM rgz_users WHERE login = 'admin';")
+    if not cur.fetchone():
+        cur.execute(
+            "INSERT INTO rgz_users(login, password, is_admin) VALUES (?, ?, 1);",
+            ('admin', generate_password_hash('admin123'))
+        )
 
     db_close(conn, cur)
 
 
 init_db()
 
-
 def current_user():
     uid = session.get('rgz_user_id')
     login = session.get('rgz_login')
-    if uid and login:
-        return {'id': uid, 'login': login}
-    return None
+    if not (uid and login):
+        return None
+    
+    conn, cur = db_connect()
+    cur.execute("SELECT is_admin FROM rgz_users WHERE id=?;", (uid,))
+    row = cur.fetchone()
+    db_close(conn, cur)
 
+    if not row:
+        return None
+
+    return {
+        'id': uid,
+        'login': login,
+        'is_admin': (row['is_admin'] == 1)
+    }
 
 def jsonrpc_error(code, msg, _id):
     return {"jsonrpc": "2.0", "error": {"code": code, "message": msg}, "id": _id}
@@ -150,7 +169,10 @@ def rgz_delete_account():
     user = current_user()
     if not user:
         return redirect('/rgz/login')
-
+    
+    if user['is_admin']:
+        return redirect('/rgz/login?deleted_admin=1')
+    
     conn, cur = db_connect()
 
     cur.execute("UPDATE rgz_lockers SET owner_id=NULL WHERE owner_id=?;", (user['id'],))
@@ -240,7 +262,7 @@ def rgz_api():
         cur.execute("SELECT COUNT(*) AS c FROM rgz_lockers WHERE owner_id=?;", (user['id'],))
         cnt = cur.fetchone()['c']
 
-        if cnt >= 5:
+        if cnt >= 5 and not user['is_admin']:
             db_close(conn, cur)
             return jsonrpc_error(6, "Нельзя бронировать более пяти ячеек", _id)
 
@@ -267,7 +289,7 @@ def rgz_api():
             db_close(conn, cur)
             return jsonrpc_error(3, "Эта ячейка уже свободна", _id)
 
-        if row['owner_id'] != user['id']:
+        if row['owner_id'] != user['id'] and not user['is_admin']:
             db_close(conn, cur)
             return jsonrpc_error(4, "Нельзя снять бронь с чужой ячейки", _id)
 

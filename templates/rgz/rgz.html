@@ -77,6 +77,13 @@
                     } else {
                         alert("Эта ячейка занята пользователем: " + l.owner);
                     }
+                         if (user.is_admin) {
+                        if (confirm("Освободить ячейку, занятую пользователем: " + l.owner + "?")) {
+                            cancellation(l.id);
+                        }
+                    } else {
+                        alert("Эта ячейка занята пользователем: " + l.owner);
+                    }
                 };
 
                 grid.appendChild(div);
