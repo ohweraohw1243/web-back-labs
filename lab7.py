@@ -54,6 +54,6 @@ def get_films():
 
 @lab7.route('/lab7/rest-api/films/<int:id>', methods=['GET'])
 def get_film(id):
-    if film_id < 0 or film_id >= len(films):
-        abort(404)
+    if id < 0 or id >= len(films):
+        return {"error": "Фильм не найден"}, 404
     return films[id]
