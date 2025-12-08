@@ -12,9 +12,9 @@ if not hasattr(lab9, "boxes"):
             "y": random.randint(100, 500),
             "opened": False,
 
-            "box_img": f"/static/lab9/box{i+1}.jpg",
+            "box_img": f"/static/lab9/box{i+1}.png",
 
-            "gift_img": f"/static/lab9/gift{i+1}.jpg",
+            "gift_img": f"/static/lab9/gift{i+1}.png",
 
             "text": f"Поздравление №{i+1}! С Новым годом!"
         })
