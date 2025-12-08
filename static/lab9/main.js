@@ -2,30 +2,29 @@ function loadBoxes() {
     fetch("/lab9/api/boxes", { method: "POST" })
         .then(r => r.json())
         .then(data => {
-
             let field = document.getElementById("field");
             field.innerHTML = "";
 
             document.getElementById("remaining").innerText = data.remaining;
 
-            data.boxes.forEach(box => {
+            if (data.logged_in) {
+                const santa = document.getElementById("santa");
+                if (santa) {
+                    santa.onclick = resetBoxes;
+                }
+            }
 
+            data.boxes.forEach(b => {
                 let img = document.createElement("img");
 
-                img.src = box.opened
-                    ? "/static/lab9/empty.jpg"
-                    : box.box_img;
-
+                img.src = b.opened ? b.gift_img : b.box_img;
                 img.style.position = "absolute";
-                img.style.left = box.x + "px";
-                img.style.top = box.y + "px";
+                img.style.left = b.x + "px";
+                img.style.top = b.y + "px";
                 img.style.width = "130px";
                 img.style.cursor = "pointer";
 
-                img.onclick = () => {
-                    if (!box.opened)
-                        openBox(box.id, img);
-                };
+                img.onclick = () => openBox(b.id, img);
 
                 field.append(img);
             });
@@ -41,16 +40,26 @@ function openBox(id, imgElement) {
     })
         .then(r => r.json())
         .then(data => {
+            const msg = document.getElementById("message");
+
             if (data.error) {
-                document.getElementById("message").innerText = data.error;
+                msg.innerText = data.error;
                 return;
             }
 
             imgElement.src = data.gift;
-            document.getElementById("message").innerText = data.text;
+            msg.innerText = data.text;
 
             loadBoxes();
         });
 }
+
+
+function resetBoxes() {
+    fetch("/lab9/api/reset", { method: "POST" })
+        .then(r => r.json())
+        .then(() => loadBoxes());
+}
+
 
 window.onload = loadBoxes;
